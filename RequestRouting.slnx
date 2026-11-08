@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RequestRouting.Domain/RequestRouting.Domain.csproj" />
+    <Project Path="src/RequestRouting.Application/RequestRouting.Application.csproj" />
+    <Project Path="src/RequestRouting.Infrastructure/RequestRouting.Infrastructure.csproj" />
+    <Project Path="src/RequestRouting.Api/RequestRouting.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RequestRouting.UnitTests/RequestRouting.UnitTests.csproj" />
+    <Project Path="tests/RequestRouting.IntegrationTests/RequestRouting.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

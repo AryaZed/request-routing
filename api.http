@@ -1,0 +1,47 @@
+@instanceA = http://localhost:5001
+@instanceB = http://localhost:5002
+
+### Create an expert with capacity 1
+POST {{instanceA}}/api/experts
+Content-Type: application/json
+
+{ "name": "Sara", "capacity": 1, "topics": ["finance", "legal"] }
+
+### Submit a request: assigned straight away
+POST {{instanceA}}/api/requests
+Content-Type: application/json
+
+{ "requestKey": "demo-1", "topic": "finance", "title": "Invoice query", "priority": "Normal" }
+
+### Retry the same key on the other instance: 200, the same request
+POST {{instanceB}}/api/requests
+Content-Type: application/json
+
+{ "requestKey": "demo-1", "topic": "finance", "title": "Invoice query", "priority": "Normal" }
+
+### The expert is full, so this one waits
+POST {{instanceA}}/api/requests
+Content-Type: application/json
+
+{ "requestKey": "demo-2", "topic": "finance", "title": "Refund", "priority": "Normal" }
+
+### An urgent request overtakes the normal one
+POST {{instanceA}}/api/requests
+Content-Type: application/json
+
+{ "requestKey": "demo-3", "topic": "legal", "title": "Contract", "priority": "Urgent" }
+
+### A topic nobody handles waits, and blocks nothing
+POST {{instanceA}}/api/requests
+Content-Type: application/json
+
+{ "requestKey": "demo-4", "topic": "technical", "title": "Outage", "priority": "Urgent" }
+
+### The queue, in service order
+GET {{instanceA}}/api/requests/pending
+
+### Close the first request: the urgent one is assigned next
+POST {{instanceB}}/api/requests/1/close
+
+### Check the expert
+GET {{instanceA}}/api/experts/1

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build RequestRouting.slnx -c Release
+
+      # ROUTING_TEST_SQLSERVER is unset, so the integration tests start SQL Server with Testcontainers.
+      - name: Test
+        run: dotnet test --solution RequestRouting.slnx -c Release --no-build
+
+      - name: No schema changes missing from the migrations
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef migrations has-pending-model-changes \
+            -p src/RequestRouting.Infrastructure -s src/RequestRouting.Api \
+            -c AppDbContext --configuration Release --no-build
+        env:
+          ConnectionStrings__Default: Server=unused;Database=unused
+
+      - name: Docker image builds
+        run: docker build -t request-routing .

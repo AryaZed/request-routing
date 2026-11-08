@@ -1,0 +1,46 @@
+# Two instances of the API on one database. The password is for local development only.
+name: request-routing
+
+x-app: &app
+  build: .
+  environment: &app-environment
+    ASPNETCORE_ENVIRONMENT: Development
+    ASPNETCORE_URLS: http://+:8080
+    ConnectionStrings__Default: Server=db;Database=RequestRouting;User Id=sa;Password=${SA_PASSWORD:-Dev_Only_Passw0rd!};TrustServerCertificate=True
+    Database__MigrateOnStartup: "false"
+
+x-api: &api
+  <<: *app
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:-Dev_Only_Passw0rd!}
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # Runs once and exits. The API instances only start after it succeeds.
+  migrate:
+    <<: *app
+    command: ["--migrate-only"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api-a:
+    <<: *api
+    ports:
+      - "5001:8080"
+
+  api-b:
+    <<: *api
+    ports:
+      - "5002:8080"
